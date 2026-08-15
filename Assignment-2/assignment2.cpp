@@ -8,7 +8,7 @@ struct Movie {
     string title;
     int year;
     double rating;
-    int watchTime;
+    int voteCount;
 };
 
 const int MAX = 10000;
@@ -25,14 +25,14 @@ int partition(int low, int high, int sortBy) {
     double pivot;
     if (sortBy == 1) pivot = movies[high].rating;
     else if (sortBy == 2) pivot = movies[high].year;
-    else pivot = movies[high].watchTime;
+    else pivot = movies[high].voteCount;
 
     int i = low - 1;
     for (int j = low; j < high; j++) {
         double value;
         if (sortBy == 1) value = movies[j].rating;
         else if (sortBy == 2) value = movies[j].year;
-        else value = movies[j].watchTime;
+        else value = movies[j].voteCount;
 
         if (value >= pivot) {
             i++;
@@ -51,6 +51,7 @@ void quicksort(int low, int high, int sortBy) {
     }
 }
 
+// Quote-aware CSV split: commas inside "..." are not treated as separators
 void splitLine(const string& line, string fields[], int maxFields) {
     int idx = 0;
     string field;
@@ -71,7 +72,7 @@ void splitLine(const string& line, string fields[], int maxFields) {
 }
 
 int main() {
-    ifstream file("Top_10000_Movies.csv\\Top_10000_Movies.csv");
+    ifstream file("movi.csv\\movi.csv");
     if (!file.is_open()) {
         cout << "Could not open file. Put the CSV in the same folder.\n";
         return 0;
@@ -79,45 +80,33 @@ int main() {
 
     string line;
     getline(file, line); // header row
-    cout << "Header: " << line << "\n";
 
-    const int NUM_COLS = 13;
-    int rowNum = 0;
-    int printedErrors = 0;
+    // Columns: 0=blank,1=id,2=title,3=overview,4=release_date,
+    // 5=popularity,6=vote_average,7=vote_count
+    const int NUM_COLS = 8;
 
     while (getline(file, line) && count < MAX) {
-        rowNum++;
         string fields[NUM_COLS];
         splitLine(line, fields, NUM_COLS);
 
         try {
-            string title = fields[3];
-            string releaseDate = fields[5];
+            string title = fields[2];
+            string releaseDate = fields[4];
             string ratingStr = fields[6];
-            string runtimeStr = fields[11];
+            string voteCountStr = fields[7];
 
-            if (title.empty() || releaseDate.size() < 4) {
-                if (printedErrors < 5) {
-                    cout << "Row " << rowNum << " skipped (empty title/date). title=[" << title << "] date=[" << releaseDate << "]\n";
-                    printedErrors++;
-                }
-                continue;
-            }
+            if (title.empty() || releaseDate.size() < 4) continue;
 
             int year = stoi(releaseDate.substr(0, 4));
             double rating = stod(ratingStr);
-            int runtime = runtimeStr.empty() ? 0 : (int)stod(runtimeStr);
+            int voteCount = voteCountStr.empty() ? 0 : (int)stod(voteCountStr);
 
             movies[count].title = title;
             movies[count].year = year;
             movies[count].rating = rating;
-            movies[count].watchTime = runtime;
+            movies[count].voteCount = voteCount;
             count++;
-        } catch (exception& e) {
-            if (printedErrors < 5) {
-                cout << "Row " << rowNum << " FAILED: " << e.what() << " | raw line: " << line.substr(0, 100) << "\n";
-                printedErrors++;
-            }
+        } catch (...) {
             continue;
         }
     }
@@ -125,7 +114,7 @@ int main() {
     cout << "Loaded " << count << " movies.\n";
 
     int choice;
-    cout << "Sort by: 1-Rating  2-Year  3-Watch Time\nEnter choice: ";
+    cout << "Sort by: 1-Rating  2-Year  3-Vote Count\nEnter choice: ";
     cin >> choice;
 
     quicksort(0, count - 1, choice);
@@ -134,7 +123,7 @@ int main() {
     for (int i = 0; i < 10 && i < count; i++) {
         cout << movies[i].title << " (" << movies[i].year << ") | "
              << "Rating: " << movies[i].rating << " | "
-             << "Runtime: " << movies[i].watchTime << " min\n";
+             << "Vote Count: " << movies[i].voteCount << "\n";
     }
 
     return 0;
