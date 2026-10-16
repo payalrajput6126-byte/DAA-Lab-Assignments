@@ -1,188 +1,74 @@
+Multistage Graph Using Dynamic Programming
 
-Program.txt
-100%
-// multistage_dp_swiftcargo.cpp
-// Build: g++ -O2 -std=c++17 multistage_dp_swiftcargo.cpp -o multistage_dp_swiftcargo
+Aim
+To implement a multistage graph algorithm in C++ to find the minimum-cost path from a source node in Stage 0 to a destination node in the final stage.
 
-#include <bits/stdc++.h>
-using namespace std;
+Description
+A multistage graph is a directed graph whose vertices are divided into ordered stages. Edges connect nodes across stages. Dynamic programming is used to calculate the minimum remaining cost from each node to the final stage.
 
-struct Edge {
-    int to;
-    double base_cost;   // static base cost (distance/fuel baseline)
-    double cur_cost;    // current cost after real-time modifiers
-};
+This implementation also supports live edge-cost updates and recalculates the optimal costs and paths after an update.
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+Features
+Accepts the number of stages and nodes in each stage.
+Accepts directed edges and their costs.
+Validates node IDs and rejects negative edge costs.
+Calculates minimum costs using dynamic programming.
+Reconstructs an optimal path from a Stage-0 node.
+Supports live edge-cost updates using a multiplier.
+Displays final minimum costs and the final optimal path.
+Algorithm
+Read the number of stages and the number of nodes in each stage.
+Assign node IDs to stages in order, starting from node 0.
+Read the directed edges and their costs.
+Initialize the minimum cost of every node in the final stage to zero.
+Process the earlier stages in reverse order.
+For each node, calculate the minimum of edge cost + minimum cost of the destination node.
+Store the next node to reconstruct the optimal path.
+Apply any live edge-cost updates and recalculate the minimum costs.
+Display the final results and optimal path.
+Sample Input
+The sample input is provided in input.txt.
 
-    // ---------- Input with prompts ----------
-    int S;
-    cout << "Enter number of stages: ";
-    cin >> S;
+It defines 3 stages, 6 nodes, 8 edges, and one live edge-cost update.
 
-    vector<int> stage_count(S);
-    long long N = 0;
+Sample Output
+The program output is saved in output.txt.
 
-    cout << "Enter number of nodes in each stage (" << S << " values): ";
-    for (int i = 0; i < S; ++i) {
-        cin >> stage_count[i];
-        N += stage_count[i];
-    }
+For the supplied test case, the initial minimum costs are:
 
-    vector<int> stage_start(S);
-    int idx = 0;
-    for (int i = 0; i < S; ++i) {
-        stage_start[i] = idx;
-        idx += stage_count[i];
-    }
+Node 0: 5.00
+Node 1: 3.00
+After updating the cost of edge 2 -> 4 with multiplier 2, the final minimum costs are:
 
-    int M;
-    cout << "Enter number of edges: ";
-    cin >> M;
+Node 0: 7.00
+Node 1: 3.00
+The final optimal path from node 0 is 0 -> 3 -> 4, with total cost 7.00.
 
-    vector<vector<Edge>> adj(N);
-    vector<vector<int>> rev_adj(N);
+Time Complexity
+For one dynamic programming calculation, the time complexity is O(V + E), where V is the number of vertices and E is the number of edges, assuming the graph follows the multistage ordering.
 
-    cout << "Enter each edge as: u v cost\n";
-    for (int i = 0; i < M; ++i) {
-        int u, v;
-        double cost;
-        cin >> u >> v >> cost;
-        if (u < 0 || u >= N || v < 0 || v >= N) {
-            cerr << "Invalid edge node id\n";
-            return 0;
-        }
-        Edge e{v, cost, cost};
-        adj[u].push_back(e);
-        rev_adj[v].push_back(u);
-    }
+Each live update triggers another dynamic programming calculation.
 
-    // ---------- Dynamic Programming ----------
-    const double INF = 1e30;
-    vector<double> best_cost(N, INF);
-    vector<int> next_node(N, -1);
+Space Complexity
+The space complexity is O(V + E) for the adjacency list, minimum-cost array, next-node array, and stage information.
 
-    // Initialize cost of sink stage nodes = 0 (last stage)
-    int last_stage = S - 1;
-    for (int k = 0; k < stage_count[last_stage]; ++k) {
-        int node = stage_start[last_stage] + k;
-        best_cost[node] = 0.0;
-        next_node[node] = -1;
-    }
+Requirements
+C++ compiler supporting C++17 or later
+GCC / MinGW-w64 or another compatible compiler
+Compile and Run
+Windows PowerShell
+g++ -std=c++17 multistage_graph.cpp -o multistage_graph.exe
+.\multistage_graph.exe
+Generate output.txt from the sample input
+.\multistage_graph.exe < input.txt > output.txt
 
-    // Classic backward DP
-    for (int st = S - 2; st >= 0; --st) {
-        for (int k = 0; k < stage_count[st]; ++k) {
-            int u = stage_start[st] + k;
-            double best = INF;
-            int bestv = -1;
-            for (auto &e : adj[u]) {
-                int v = e.to;
-                double cost = e.cur_cost;
-                if (best_cost[v] + cost < best) {
-                    best = best_cost[v] + cost;
-                    bestv = v;
-                }
-            }
-            best_cost[u] = best;
-            next_node[u] = bestv;
-        }
-    }
+Files
+multistage_graph.cpp — C++ implementation
+input.txt — sample test input
+output.txt — saved program output
+README.md — project documentation
 
-    // Output best costs from Stage-0 nodes
-    cout << fixed << setprecision(6);
-    cout << "\nBest costs from Stage-0 nodes:\n";
-    for (int k = 0; k < stage_count[0]; ++k) {
-        int u = stage_start[0] + k;
-        if (best_cost[u] >= INF/2) cout << "Node " << u << ": unreachable\n";
-        else cout << "Node " << u << ": cost = " << best_cost[u] << "\n";
-    }
 
-    // Example: retrieve path from a given source node s
-    cout << "\nEnter a source node id (in stage 0) to print path, or -1 to skip: ";
-    int src;
-    cin >> src;
-    if (src >= 0 && src < N) {
-        if (best_cost[src] >= INF/2) {
-            cout << "No route from " << src << "\n";
-        } else {
-            cout << "Path from " << src << " : ";
-            int cur = src;
-            double total = 0.0;
-            while (cur != -1) {
-                cout << cur;
-                int nxt = next_node[cur];
-                if (nxt != -1) {
-                    // find edge cost for display
-                    double ecost = 0;
-                    bool found = false;
-                    for (auto &e : adj[cur]) if (e.to == nxt) { ecost = e.cur_cost; found=true; break; }
-                    if (!found) ecost = 0;
-                    total += ecost;
-                    cout << " -> ";
-                } else break;
-                cur = nxt;
-            }
-            cout << "\nTotal route cost (sum edges): " << total << "\n";
-        }
-    }
+Author
+Payal Charvande
 
-    // ---------- Real-time updates ----------
-    cout << "\nEnter number of live updates to edge costs (0 to finish): ";
-    int Q; cin >> Q;
-    while (Q-- > 0) {
-        int u, v;
-        double multiplier;
-        cout << "Enter edge update (u v multiplier): ";
-        cin >> u >> v >> multiplier;
-
-        // update edges from u to v
-        for (auto &e : adj[u]) {
-            if (e.to == v) {
-                e.cur_cost = e.base_cost * multiplier;
-            }
-        }
-
-        // Incremental update
-        auto recompute_node = [&](int node) -> double {
-            double best = INF;
-            int bestv = -1;
-            for (auto &e : adj[node]) {
-                if (best_cost[e.to] >= INF/2) continue;
-                double cand = e.cur_cost + best_cost[e.to];
-                if (cand < best) { best = cand; bestv = e.to; }
-            }
-            next_node[node] = bestv;
-            return best;
-        };
-
-        queue<int> q;
-        double newcost_u = recompute_node(u);
-        if (abs(newcost_u - best_cost[u]) > 1e-9) {
-            best_cost[u] = newcost_u;
-            q.push(u);
-        }
-        while (!q.empty()) {
-            int node = q.front(); q.pop();
-            for (int pred : rev_adj[node]) {
-                double newc = recompute_node(pred);
-                if (abs(newc - best_cost[pred]) > 1e-9) {
-                    best_cost[pred] = newc;
-                    q.push(pred);
-                }
-            }
-        }
-    }
-
-    cout << "\nAfter updates, best costs from Stage-0 nodes:\n";
-    for (int k = 0; k < stage_count[0]; ++k) {
-        int u = stage_start[0] + k;
-        if (best_cost[u] >= INF/2) cout << "Node " << u << ": unreachable\n";
-        else cout << "Node " << u << ": cost = " << best_cost[u] << "\n";
-    }
-
-    return 0;
-}
-Displaying Program.txt.
