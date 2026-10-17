@@ -1,0 +1,16 @@
+Example input and output
+Input:
+Enter number of cities (max 10): 4
+Enter cost matrix (0 if no route):
+0 10 15 20
+10 0 35 25
+15 35 0 30
+20 25 30 0
+
+
+Output:
+Minimum travel cost: 80
+Optimal route: 0 1 3 2 0
+
+
+The total cost is \(10 + 25 + 30 + 15 = 80\).
