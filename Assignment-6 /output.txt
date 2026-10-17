@@ -1,1 +1,14 @@
+3. Example output
 
+Input:
+Enter number of items: 4
+Enter weight and utility value of each item:
+2 10
+3 20
+4 30
+5 40
+Enter truck capacity: 8
+
+Output:
+Maximum utility value: 60
+Selected items: 2 4
