@@ -1,3 +1,5 @@
+Enter number of customer orders: 20
+
 Sorted customer orders by timestamp:
 00:15
 01:20
