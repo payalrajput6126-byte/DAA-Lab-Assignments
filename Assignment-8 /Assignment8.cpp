@@ -1,115 +1,106 @@
-
-#include <iostream>
-#include <queue>
-#include <vector>
-#include <climits>
+#include <bits/stdc++.h>
 using namespace std;
 
-int n, cost[10][10];
-int bestCost = INT_MAX;
-vector<int> bestPath;
+const int INF = 1000000000;
 
 struct Node {
-    int city;
-    int visited[10];
+    vector<vector<int>> mat;
     vector<int> path;
-    int totalCost;
+    int bound;
 };
 
 struct Compare {
-    bool operator()(const Node& a, const Node& b) const {
-        return a.totalCost > b.totalCost;
+    bool operator()(const Node &a, const Node &b) const {
+        return a.bound > b.bound;
     }
 };
 
-void tsp() {
-    priority_queue<Node, vector<Node>, Compare> pq;
-
-    Node start{};
-    start.city = 0;
-    start.totalCost = 0;
-    start.path.push_back(0);
-
-    for (int i = 0; i < n; i++)
-        start.visited[i] = 0;
-
-    start.visited[0] = 1;
-    pq.push(start);
-
-    while (!pq.empty()) {
-        Node current = pq.top();
-        pq.pop();
-
-        if (current.totalCost >= bestCost)
-            continue;
-
-        if (current.path.size() == n) {
-            // Check whether the last city can return to city 0
-            if (cost[current.city][0] > 0) {
-                int finalCost =
-                    current.totalCost + cost[current.city][0];
-
-                if (finalCost < bestCost) {
-                    bestCost = finalCost;
-                    bestPath = current.path;
-                    bestPath.push_back(0);
-                }
-            }
-            continue;
-        }
-
-        for (int next = 0; next < n; next++) {
-            if (!current.visited[next] &&
-                cost[current.city][next] > 0) {
-
-                Node child = current;
-                child.city = next;
-                child.visited[next] = 1;
-                child.totalCost += cost[current.city][next];
-                child.path.push_back(next);
-
-                if (child.totalCost < bestCost)
-                    pq.push(child);
-            }
-        }
+int reduceMatrix(vector<vector<int>> &a) {
+    int n = a.size(), reduction = 0;
+    for (int i = 0; i < n; i++) {
+        int mn = *min_element(a[i].begin(), a[i].end());
+        if (mn == INF) continue;
+        reduction += mn;
+        for (int j = 0; j < n; j++)
+            if (a[i][j] != INF) a[i][j] -= mn;
     }
+    for (int j = 0; j < n; j++) {
+        int mn = INF;
+        for (int i = 0; i < n; i++) mn = min(mn, a[i][j]);
+        if (mn == INF) continue;
+        reduction += mn;
+        for (int i = 0; i < n; i++)
+            if (a[i][j] != INF) a[i][j] -= mn;
+    }
+    return reduction;
 }
 
 int main() {
-    cout << "Enter number of cities (max 10): ";
+    int n;
+    cout << "Enter number of cities: ";
     cin >> n;
+    if (n < 2) return 0;
 
-    if (n < 2 || n > 10) {
-        cout << "Number of cities must be between 2 and 10.\n";
-        return 1;
-    }
-
-    cout << "Enter cost matrix (0 if no route):\n";
-
-    for (int i = 0; i < n; i++) {
+    vector<vector<int>> cost(n, vector<int>(n));
+    cout << "Enter cost matrix (0 for no road):\n";
+    for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++) {
             cin >> cost[i][j];
+            if (i == j || cost[i][j] <= 0) cost[i][j] = INF;
+        }
 
-            if (cost[i][j] < 0) {
-                cout << "Costs must be non-negative.\n";
-                return 1;
+    Node root{cost, {0}, 0};
+    root.bound = reduceMatrix(root.mat);
+    priority_queue<Node, vector<Node>, Compare> pq;
+    pq.push(root);
+    int best = INF;
+    vector<int> answer;
+
+    while (!pq.empty()) {
+        Node cur = pq.top(); pq.pop();
+        if (cur.bound >= best) continue;
+        int u = cur.path.back();
+
+        if ((int)cur.path.size() == n) {
+            if (cost[u][0] == INF) continue;
+            int total = cost[u][0];
+            for (int k = 1; k < n; k++)
+                total += cost[cur.path[k-1]][cur.path[k]];
+            if (total < best) {
+                best = total;
+                answer = cur.path;
             }
+            continue;
+        }
+
+        for (int v = 1; v < n; v++) {
+            if (find(cur.path.begin(), cur.path.end(), v) != cur.path.end())
+                continue;
+            if (cur.mat[u][v] == INF) continue;
+
+            Node child = cur;
+            child.path.push_back(v);
+            child.bound += cur.mat[u][v];
+            for (int j = 0; j < n; j++) child.mat[u][j] = INF;
+            for (int i = 0; i < n; i++) child.mat[i][v] = INF;
+            if ((int)child.path.size() < n) child.mat[v][0] = INF;
+            child.bound += reduceMatrix(child.mat);
+
+            if (child.bound < best) pq.push(child);
         }
     }
 
-    tsp();
-
-    if (bestCost == INT_MAX) {
-        cout << "No complete tour exists.\n";
+    if (best == INF) {
+        cout << "No possible tour\n";
     } else {
-        cout << "\nMinimum travel cost: " << bestCost;
-        cout << "\nOptimal route: ";
-
-        for (int city : bestPath)
-            cout << city << " ";
-
-        cout << endl;
+        cout << "\nMinimum cost: " << best << "\nRoute: ";
+        for (int v : answer) cout << v << " -> ";
+        cout << "0\n";
     }
+}#include <iostream>
+using namespace std;
+int main()
+{
 
-    return 0;
+	return 0;
 }
