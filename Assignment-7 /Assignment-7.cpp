@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <string>
 using namespace std;
 
 int main() {
@@ -61,13 +62,28 @@ int main() {
         color[u] = c;
     }
 
+    // Color names for displaying the result
+    vector<string> colorNames = {
+        "Red", "Blue", "Green", "Yellow", "Orange",
+        "Purple", "Pink", "Cyan", "Brown", "Violet"
+    };
+
     int slots = *max_element(color.begin(), color.end()) + 1;
 
     cout << "\nExam Timetable:\n";
 
     for (int i = 0; i < n; i++) {
+        string name;
+
+        if (color[i] < (int)colorNames.size()) {
+            name = colorNames[color[i]];
+        } else {
+            name = "Color-" + to_string(color[i] + 1);
+        }
+
         cout << "Course " << i
-             << " -> Slot " << color[i] + 1 << '\n';
+             << " -> Color: " << name
+             << ", Slot: " << color[i] + 1 << '\n';
     }
 
     cout << "\nTotal exam slots required: "
