@@ -1,54 +1,50 @@
+
 #include <iostream>
+#include <fstream>
 #include <string>
+#include <vector>
 using namespace std;
 
-void merge(string orders[], int left, int mid, int right)
+void merge(vector<string>& orders, int left, int mid, int right)
 {
     int i = left;
     int j = mid + 1;
-    int k = 0;
 
-    int size = right - left + 1;
-    string *temp = new string[size];
+    vector<string> temp;
 
     while (i <= mid && j <= right)
     {
         if (orders[i] <= orders[j])
         {
-            temp[k] = orders[i];
+            temp.push_back(orders[i]);
             i++;
         }
         else
         {
-            temp[k] = orders[j];
+            temp.push_back(orders[j]);
             j++;
         }
-        k++;
     }
 
     while (i <= mid)
     {
-        temp[k] = orders[i];
+        temp.push_back(orders[i]);
         i++;
-        k++;
     }
 
     while (j <= right)
     {
-        temp[k] = orders[j];
+        temp.push_back(orders[j]);
         j++;
-        k++;
-    }
- 
-    for (i = 0; i < size; i++)
-    {
-        orders[left + i] = temp[i];
     }
 
-    delete[] temp;
+    for (int k = 0; k < (int)temp.size(); k++)
+    {
+        orders[left + k] = temp[k];
+    }
 }
 
-void mergeSort(string orders[], int left, int right)
+void mergeSort(vector<string>& orders, int left, int right)
 {
     if (left >= right)
         return;
@@ -57,34 +53,49 @@ void mergeSort(string orders[], int left, int right)
 
     mergeSort(orders, left, mid);
     mergeSort(orders, mid + 1, right);
+
     merge(orders, left, mid, right);
 }
 
 int main()
 {
-    int n;
+    ifstream file("orders.csv");
 
-    cout << "Enter number of customer orders: ";
-    cin >> n;
-
-    string *orders = new string[n];
- 
-    cout << "Enter order timestamps (HH:MM):" << endl;
-
-    for (int i = 0; i < n; i++)
+    if (!file.is_open())
     {
-        cin >> orders[i];
+        cout << "Error: Could not open orders.csv" << endl;
+        return 1;
     }
-    mergeSort(orders, 0, n - 1);
+
+    vector<string> orders;
+    string timestamp;
+
+    // Skip CSV header
+    getline(file, timestamp);
+
+    // Read timestamps from CSV
+    while (getline(file, timestamp))
+    {
+        if (!timestamp.empty())
+            orders.push_back(timestamp);
+    }
+
+    file.close();
+
+    cout << "Enter number of customer orders: "
+         << orders.size() << endl;
+
+    if (orders.empty())
+        return 0;
+
+    mergeSort(orders, 0, (int)orders.size() - 1);
 
     cout << "\nSorted customer orders by timestamp:" << endl;
 
-    for (int i = 0; i < n; i++)
+    for (const string& order : orders)
     {
-        cout << orders[i] << " ";
+        cout << order << endl;
     }
-    cout << endl;
 
-    delete[] orders;
     return 0;
 }
